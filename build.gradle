@@ -1,0 +1,96 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.6'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.academy'
+version = '0.0.1-SNAPSHOT'
+description = 'chat'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+
+ext {
+    JJWT_VERSION = "0.12.5"
+    QUERYDSL_VERSION = "5.0.0"
+    WEBMVC_VERSION = "2.8.13"
+}
+
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${WEBMVC_VERSION}"
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'com.h2database:h2'
+
+
+    /// jwt
+    implementation "io.jsonwebtoken:jjwt-api:${JJWT_VERSION}"
+    runtimeOnly "io.jsonwebtoken:jjwt-gson:${JJWT_VERSION}"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl:${JJWT_VERSION}"
+
+
+    ///p6spy
+    implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
+
+    // queryDSL
+    implementation "com.querydsl:querydsl-jpa:${QUERYDSL_VERSION}:jakarta"
+    annotationProcessor "com.querydsl:querydsl-apt:${QUERYDSL_VERSION}:jakarta"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+}
+
+/**
+ * querydsl 빌드 옵션
+ */
+/// 큐 객체 저장될 루트내용
+def querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
+sourceSets {
+    main.java.srcDirs += [querydslDir]
+}
+
+
+tasks.withType(JavaCompile).configureEach {
+    options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
+}
+
+clean.doLast {
+    file(querydslDir).deleteDir()
+}
+
+
+clean {
+    delete file('src/main/generated')
+}
+
+
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
